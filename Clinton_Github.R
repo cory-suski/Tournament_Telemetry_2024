@@ -475,9 +475,6 @@ ggplot(surv_df, aes(x = time, y = surv, color = strata)) +
   theme_minimal()
 
 
-# THIS NEEDS EDITING BEFORE SUBMISSION ------------------------------------
-
-
 # glm for return time -----------------------------------------------------
 #remove those that didn't return
 returntimes<-sorted_RA[!(sorted_RA$Signal %in% c(13567,13569,2398,2391)),]
@@ -616,42 +613,6 @@ summary(result)
 print(result)
 result$pvalue
 
-
-####Tables for manuscript  -----------------------------------------------------
-####Tables for manuscript  -----------------------------------------------------
-# Create a nice table using gtsummary
-# Create a gt table
-coefdfseasonoutlierdf<-coefdfseasonoutlierdf %>% rename(Season="Variable")
-coefdfseasonoutlierdf<-coefdfseasonoutlierdf%>% mutate(Season = case_when(Season == 'SeasonEarly'~ 'Early', Season =='SeasonLate' ~ 'Late'))
-table <- coefdfseasonoutlierdf %>%
-  gt() %>%
-  tab_spanner(
-    label = "Group",
-    columns = c(Season)
-  ) %>%
-  tab_spanner(
-    label = "Summary Statistics",
-    columns = c(Coefficient,HR,CI_lower,CI_upper,P_value)
-  ) %>%
-  fmt_number(
-    columns = c(Coefficient,CI_lower,CI_upper,P_value, HR),
-    decimals = 3
-  )
-
-table
-
-#save table
-table %>%
-  gtsave("table.png") 
-1
-#this needs tweaking but its close
-result_table <- tbl_regression(coefdfseasonoutlierdf) %>%
-  add_global_p() %>%
-  modify_header(label = "**Cox Proportional Hazard Model Results**", subtitle = "Tournament Season as a predictor of return") %>%
-  bold_labels()
-result_table
-print(coef_info)
-"Tournament Season as a predictor of return"
 
 #pull quantitative fish data from each group
 summary(biometrics_RA)
@@ -1095,66 +1056,48 @@ res7dayplot
 
 
 # Figures and Tables for Papers -------------------------------------------
-resplot1<-  ggplot(binnedresrename, aes(x=Bin,
-                                        y= indv.ratios.array,
-                                        group_by=Array)) +
-  geom_boxplot(aes(fill=Array))+
-  facet_grid(Season~.)+
-  scale_fill_manual(name= "Zone", values = c("#0A0708" ,"#444444","white","#747474","#B1B1B1","#D6D6D6", "#BDC3CB"))+
-  scale_color_manual(name = "Array", values = c("black", "black","black", "black","black", "black","black"))+
-  theme(
-    legend.background = element_blank(),
-    legend.key = element_blank(),
-    legend.text = element_text(colour = "black", size = 10),
-    legend.title = element_text(face = "bold", colour = "black", size = 12),
-    plot.background = element_blank(),
-    axis.title.y =  element_blank(),
-    axis.title.x = element_blank(),
-    axis.ticks.length = unit(.50,"cm"),
-    axis.ticks = element_line(size = 1.00, colour = "black"),
-    axis.text.y = element_text(face = "bold", colour = "black", size = 10),
-    axis.line = element_line(size = 1.00, color = "black"),
-    axis.text = element_text(size = 10, face = "bold", color = "black"),
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor =  element_blank(),
-    panel.grid.major =  element_blank(),
-    panel.background =  element_blank(),
-    panel.spacing = unit(1, "lines"),
-    panel.border =  element_blank(), 
-    strip.background = element_rect(color = "black", fill ="#D6D6D6", linewidth = 1),
-    strip.text = element_text(color="black",size = 15))
-resplot1
+####Mosaic chart########################
+resdfcountplot<-resdfcount %>% mutate(Array = case_when(Array == 'C_1'~ 'Lake 1', Array =='C_2' ~ 'Dam',
+                                                        Array =='C_3'~ 'Intake',
+                                                        Array== 'W_1' ~'Lake 2', Array== 'W_3'~ 'Bridge', 
+                                                        Array== 'M_1'~ 'Release',Array== 'W_4'~ 'Outflow',))
+resdfcountplot <- resdfcountplot %>% group_by(Season,Array)
+resdfcountplot$Array <- factor(resdfcountplot$Array, levels=c("Release","Lake 1" ,"Lake 2","Dam" ,
+                                                              "Bridge","Intake" ,"Outflow")) 
 
-#plot with only bin 7 
-res7dayrename<-binnedresrename%>% filter(Elapsed.T < 7.01)
-res7dayplot<-ggplot(res7dayrename, aes(x=Array,
-                                       y= indv.ratios.array,
-                                       group_by=Season)) +
-  geom_boxplot(aes(fill=Season))+
-  scale_fill_manual(name= "Zone", values = c("#444444" ,"#D6D6D6"))+
-  scale_color_manual(name = "Array", values = c("black", "black","black", "black","black", "black","black"))+
+ggplot(resdfcountplot, aes(x = Array, y = Percent, fill = Season)) +
+  geom_col(position = "fill") +
+  labs(x = "Receiver Location", y = "Time Spent (days) Since Release")+
   theme(
-    legend.background = element_blank(),
-    legend.key = element_blank(),
-    legend.text = element_text(colour = "black", size = 10),
-    legend.title = element_text(face = "bold", colour = "black", size = 12),
     plot.background = element_blank(),
-    axis.title.y =  element_blank(),
-    axis.title.x = element_blank(),
-    axis.ticks.length = unit(.50,"cm"),
-    axis.ticks = element_line(size = 1.00, colour = "black"),
-    axis.text.y = element_text(face = "bold", colour = "black", size = 10),
-    axis.line = element_line(size = 1.00, color = "black"),
-    axis.text = element_text(size = 10, face = "bold", color = "black"),
+    legend.background = element_blank(),
+    legend.title = element_text( colour = "#413F31", size = 18),
+    legend.text = element_text( colour = "#413F31", size = 18),
+    plot.title = element_text( colour= "#413F31", size = 28,hjust = .0125),
+    axis.title.y = element_text( colour = "#413F31", size = 18),
+    axis.title.x = element_text( colour = "#413F31", size = 18),
+    axis.ticks = element_blank(),
+    axis.text.y = element_text( colour = "#413F31", size = 15),
+    axis.line = element_line(size = 1.00, color = "#413F31"),
+    axis.text = element_text(angle = 35,vjust = 0.5, hjust=1,size = 15,  color = "#413F31"),
     panel.grid.major.x = element_blank(),
-    panel.grid.minor =  element_blank(),
-    panel.grid.major =  element_blank(),
-    panel.background =  element_blank(),
-    panel.spacing = unit(1, "lines"),
-    panel.border =  element_blank(), 
-    strip.background = element_rect(color = "black", fill ="#B8BBC1", linewidth = 1),
-    strip.text = element_text(color="black",size = 15))
-res7dayplot
+    panel.grid.minor = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.background = element_blank())+
+  scale_fill_manual(name= "Season", values = c("#413F31", "#C5C5C5","#999578","#525252"))+
+  scale_y_continuous(labels = scales::percent)
+
+ggsave("mosaicspatial2.png",
+       plot = last_plot(),
+       device = NULL,
+       path = NULL,
+       scale = 1,
+       width = 11,
+       height = 8,
+       units = c("in"),
+       dpi = 2000,
+       limitsize = FALSE,
+       bg = NULL)
 
 # models ---------------------------------------
 
