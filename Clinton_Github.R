@@ -487,12 +487,10 @@ Anova(interceptonly)
 summary(interceptonly)
 par(mfrow = c(2, 2))
 plot(lm(interceptonly))
-Model1<-lmer(formula = Elapsed.T~Season+(1|Group),
-             data = returntimes,
-             control = lmerControl(optimizer ='optimx', optCtrl=list(method='bobyqa')))
-Model2<-lmer(formula = Elapsed.T~Group+(1|Group),
-             data = returntimes,
-             control = lmerControl(optimizer ='optimx', optCtrl=list(method='bobyqa')))
+returntimes<-merge(returntimes,biometrics_RA,by= intersect(x = "Signal", y= "Signal"))
+
+Model1<-glm(formula = Elapsed.T~Season/Group.x,
+            data = returntimes,family=poisson)
 anova(Model1)
 Anova(Model1)
 Model1emmeans<-emmeans(Model1, ~ Season)
@@ -502,14 +500,7 @@ par(mfrow = c(2, 2))
 plot(lm(Model1))
 r_squared <- r.squaredGLMM(Model1)
 
-anova(Model2)
-Anova(Model2)
-Model2emmeans<-emmeans(Model2, ~ Group)
-Model2contrast<- pairs(Model2emmeans)
-summary(Model2contrast)
-r_squared <- r.squaredGLMM(Model2)
-par(mfrow = c(2, 2))
-plot(lm(Model2))
+
 ## Survival/Return plots (aesthetically pleasing) -----------------------------------------
 #bar plot for successful return
 returncsv <- read_csv("returncsv.csv", col_types = cols(nonreturn = col_number(), 
